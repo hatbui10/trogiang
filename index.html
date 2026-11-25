@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Trợ lý giải đề Tiếng Anh — Trắc nghiệm & Tự luận</title>
+        <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/mammoth@1.7.2/mammoth.browser.min.js"></script>
+        <style>
+            :root{
+              --bg:#0f172a; --card:#1e293b; --card2:#273549; --border:#334155;
+              --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --accent2:#0ea5e9;
+              --green:#34d399; --red:#f87171; --amber:#fbbf24;
+            }
+            *{box-sizing:border-box; margin:0; padding:0;}
+            body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
+            .container{max-width:900px; margin:0 auto; padding:24px 16px 60px;}
+            header{text-align:center; padding:28px 0 20px;}
+            header h1{font-size:1.7rem; background:linear-gradient(90deg,#38bdf8,#818cf8,#c084fc); -webkit-background-clip:text; background-clip:text; color:transparent;}
+            header p{color:var(--muted); margin-top:8px; font-size:.95rem;}
+            .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:18px;}
+            .card h2{font-size:1.05rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;}
+            .step{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--accent2); color:#fff; font-size:.85rem; flex-shrink:0;}
+            label{font-size:.88rem; color:var(--muted); display:block; margin-bottom:6px;}
+            input[type=password], input[type=text], textarea, select{
+              width:100%; background:var(--card2); border:1px solid var(--border); color:var(--text);
+              border-radius:10px; padding:11px 13px; font-size:.95rem; outline:none; font-family:inherit;
+            }
+            input:focus, textarea:focus{border-color:var(--accent);}
+            textarea{min-height:170px; resize:vertical; line-height:1.5;}
+            .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+            .hint{font-size:.8rem; color:var(--muted); margin-top:8px; line-height:1.5;}
+            .hint a{color:var(--accent);}
+            .dropzone{
+              border:2px dashed var(--border); border-radius:12px; padding:28px 16px; text-align:center;
+              cursor:pointer; transition:.2s; color:var(--muted);
+            }
+            .dropzone:hover,.dropzone.drag{border-color:var(--accent); background:rgba(56,189,248,.06); color:var(--text);}
+            .dropzone .icon{font-size:2rem; display:block; margin-bottom:8px;}
+            #fileList{margin-top:10px; display:flex; flex-direction:column; gap:6px;}
+            .fileItem{display:flex; align-items:center; gap:10px; background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:.88rem;}
+            .fileItem .rm{margin-left:auto; cursor:pointer; color:var(--red); background:none; border:none; font-size:1rem;}
+            .btn{
+              display:inline-flex; align-items:center; gap:8px; background:linear-gradient(90deg,var(--accent2),#6366f1);
+              color:#fff; border:none; border-radius:10px; padding:13px 26px; font-size:1rem; font-weight:600;
+              cursor:pointer; transition:.2s;
+            }
+            .btn:hover:not(:disabled){filter:brightness(1.12); transform:translateY(-1px);}
+            .btn:disabled{opacity:.5; cursor:not-allowed;}
+            .btn.secondary{background:var(--card2); border:1px solid var(--border);}
+            .center{text-align:center;}
+            .tabs{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
+            .tab{padding:8px 16px; border-radius:8px; background:var(--card2); border:1px solid var(--border); cursor:pointer; font-size:.88rem; color:var(--muted);}
+            .tab.active{background:var(--accent2); color:#fff; border-color:var(--accent2);}
+            .hidden{display:none !important;}
+            #status{margin:14px 0; padding:12px 16px; border-radius:10px; font-size:.9rem; display:none;}
+            #status.loading{display:block; background:rgba(56,189,248,.1); border:1px solid rgba(56,189,248,.35); color:var(--accent);}
+            #status.error{display:block; background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.35); color:var(--red);}
+            .spinner{display:inline-block; width:14px; height:14px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin .8s linear infinite; vertical-align:-2px; margin-right:8px;}
+            @keyframes spin{to{transform:rotate(360deg);}}
+            /* Kết quả */
+            #result{line-height:1.7; font-size:.95rem;}
+            #result h1,#result h2,#result h3{margin:20px 0 10px; color:#7dd3fc;}
+            #result h2{border-bottom:1px solid var(--border); padding-bottom:6px;}
+            #result table{border-collapse:collapse; width:100%; margin:12px 0;}
+            #result th,#result td{border:1px solid var(--border); padding:8px 12px; text-align:left;}
+            #result th{background:var(--card2); color:#7dd3fc;}
+            #result tr:nth-child(even){background:rgba(255,255,255,.025);}
+            #result strong{color:var(--green);}
+            #result blockquote{border-left:3px solid var(--accent); padding:4px 14px; margin:10px 0; background:rgba(56,189,248,.05); color:var(--muted);}
+            #result code{background:var(--card2); padding:2px 6px; border-radius:5px;}
+            #result p{margin:8px 0;}
+            #result ul,#result ol{margin:8px 0 8px 22px;}
+            .resultActions{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;}
+            footer{text-align:center; color:var(--muted); font-size:.78rem; margin-top:30px; line-height:1.6;}
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <header>
+                <h1>📘 Trợ lý giải đề Tiếng Anh</h1>
+                <p>Tải lên bài kiểm tra bất kỳ (ảnh chụp, PDF, Word hoặc dán văn bản) — nhận đáp án chính xác cho cả <b>trắc nghiệm</b> và <b>tự luận</b>, kèm giải thích tiếng Việt.</p>
+            </header>
+
+            <!-- BƯỚC 1: API KEY -->
+            <div class="card">
+                <h2><span class="step">1</span> Nhập API key Google Gemini (miễn phí, chỉ cần 1 lần)</h2>
+                <div class="row">
+                    <div style="flex:1; min-width:240px;">
+                        <input type="password" id="apiKey" placeholder="Dán API key của bạn vào đây (AIza...)">
+                    </div>
+                    <button class="btn secondary" id="toggleKey" type="button">👁 Hiện</button>
+                </div>
+                <p class="hint">
+                    Chưa có key? Vào <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>
+                    → đăng nhập Google → bấm <b>"Create API key"</b> → sao chép và dán vào ô trên. Hoàn toàn miễn phí.
+                    Key được lưu ngay trên trình duyệt của bạn (localStorage), không gửi đi đâu khác ngoài Google.
+                </p>
+            </div>
+
+            <!-- BƯỚC 2: ĐỀ BÀI -->
+            <div class="card">
+                <h2><span class="step">2</span> Đưa đề bài vào</h2>
+                <div class="tabs">
+                    <div class="tab active" data-tab="file">📎 Tải file / ảnh</div>
+                    <div class="tab" data-tab="text">✍️ Dán văn bản</div>
+                </div>
+
+                <div id="tab-file">
+                    <div class="dropzone" id="dropzone">
+                        <span class="icon">📂</span>
+                        <b>Bấm để chọn file</b> hoặc kéo-thả vào đây<br>
+                        <span style="font-size:.8rem;">Hỗ trợ: ảnh chụp đề (JPG/PNG/WEBP), PDF, Word (.docx), .txt — có thể chọn nhiều ảnh</span>
+                        <input type="file" id="fileInput" multiple accept="image/*,.pdf,.docx,.txt" style="display:none">
+                    </div>
+                    <div id="fileList"></div>
+                </div>
+
+                <div id="tab-text" class="hidden">
+                    <textarea id="examText" placeholder="Dán toàn bộ đề kiểm tra tiếng Anh vào đây...
+
+Ví dụ:
+Question 1: She ______ to school every day.
+A. go   B. goes   C. going   D. went
+
+Part II. Writing: Write a paragraph (80-100 words) about your favorite hobby."></textarea>
+                </div>
+
+                <div style="margin-top:14px;">
+                    <label>Yêu cầu thêm (không bắt buộc)</label>
+                    <input type="text" id="extraNote" placeholder="VD: Bài tự luận viết khoảng 120 từ, trình độ lớp 9 / Giải thích thật chi tiết...">
+                </div>
+            </div>
+
+            <!-- BƯỚC 3: GIẢI -->
+            <div class="center">
+                <button class="btn" id="solveBtn">🚀 Giải đề ngay</button>
+            </div>
+
+            <div id="status"></div>
+
+            <!-- KẾT QUẢ -->
+            <div class="card hidden" id="resultCard">
+                <h2>✅ Đáp án & Lời giải</h2>
+                <div id="result"></div>
+                <div class="resultActions">
+                    <button class="btn secondary" id="copyBtn">📋 Sao chép</button>
+                    <button class="btn secondary" id="printBtn">🖨 In / Lưu PDF</button>
+                </div>
+            </div>
+
+            <footer>
+                ⚠️ Công cụ hỗ trợ học tập & tự kiểm tra. Hãy dùng để đối chiếu và hiểu bài, kết quả do AI tạo ra nên vẫn cần tự rà soát lại.<br>
+                Hoạt động hoàn toàn trên trình duyệt — đề bài chỉ được gửi tới Google Gemini API để xử lý.
+            </footer>
+        </div>
+
+        <script>
+            const $ = id => document.getElementById(id);
+            const files = []; // {name, mime, base64?, text?}
+            
+            // --- API key: lưu localStorage ---
+            $('apiKey').value = localStorage.getItem('gemini_key') || '';
+            $('apiKey').addEventListener('input', e => localStorage.setItem('gemini_key', e.target.value.trim()));
+            $('toggleKey').onclick = () => {
+              const k = $('apiKey');
+              k.type = k.type === 'password' ? 'text' : 'password';
+              $('toggleKey').textContent = k.type === 'password' ? '👁 Hiện' : '🙈 Ẩn';
+            };
+            
+            // --- Tabs ---
+            document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+              document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+              t.classList.add('active');
+              $('tab-file').classList.toggle('hidden', t.dataset.tab !== 'file');
+              $('tab-text').classList.toggle('hidden', t.dataset.tab !== 'text');
+            });
+            
+            // --- Upload ---
+            const dz = $('dropzone');
+            dz.onclick = () => $('fileInput').click();
+            dz.ondragover = e => { e.preventDefault(); dz.classList.add('drag'); };
+            dz.ondragleave = () => dz.classList.remove('drag');
+            dz.ondrop = e => { e.preventDefault(); dz.classList.remove('drag'); addFiles(e.dataTransfer.files); };
+            $('fileInput').onchange = e => addFiles(e.target.files);
+            
+            async function addFiles(list){
+              for (const f of list){
+                try {
+                  const entry = { name: f.name, mime: f.type || 'application/octet-stream' };
+                  const lower = f.name.toLowerCase();
+                  if (lower.endsWith('.docx')){
+                    const buf = await f.arrayBuffer();
+                    const res = await mammoth.extractRawText({ arrayBuffer: buf });
+                    entry.text = res.value;
+                  } else if (lower.endsWith('.txt')){
+                    entry.text = await f.text();
+                  } else if (entry.mime.startsWith('image/') || entry.mime === 'application/pdf'){
+                    entry.base64 = await toBase64(f);
+                  } else {
+                    showError('Không hỗ trợ định dạng: ' + f.name);
+                    continue;
+                  }
+                  files.push(entry);
+                } catch(err){
+                  showError('Lỗi đọc file ' + f.name + ': ' + err.message);
+                }
+              }
+              renderFileList();
+            }
+            
+            function toBase64(file){
+              return new Promise((res, rej) => {
+                const r = new FileReader();
+                r.onload = () => res(r.result.split(',')[1]);
+                r.onerror = rej;
+                r.readAsDataURL(file);
+              });
+            }
+            
+            function renderFileList(){
+              $('fileList').innerHTML = files.map((f,i) =>
+                `<div class="fileItem">📄 ${f.name}
+                   <button class="rm" onclick="removeFile(${i})" title="Xoá">✖</button>
+                 </div>`).join('');
+            }
+            window.removeFile = i => { files.splice(i,1); renderFileList(); };
+            
+            // --- Status ---
+            function showLoading(msg){ const s=$('status'); s.className='loading'; s.innerHTML='<span class="spinner"></span>'+msg; }
+            function showError(msg){ const s=$('status'); s.className='error'; s.textContent='❌ '+msg; }
+            function hideStatus(){ $('status').className=''; }
+            
+            // --- Tự dò model khả dụng với key của người dùng ---
+            let cachedModels = null;
+            async function getAvailableModels(key){
+              if (cachedModels) return cachedModels;
+              const preferred = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
+              try {
+                const resp = await fetch(
+                  `https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${encodeURIComponent(key)}`
+                );
+                const json = await resp.json();
+                if (!resp.ok) throw new Error(json.error?.message || ('HTTP ' + resp.status));
+                const usable = (json.models || [])
+                  .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+                  .map(m => m.name.replace(/^models\//, ''))
+                  // Loại các model không trả lời bằng văn bản (đọc giọng nói, tạo ảnh/video, embedding...)
+                  .filter(m => !/tts|audio|image|imagen|veo|live|embed|aqa|robotics|computer-use/i.test(m));
+                // Ưu tiên danh sách preferred, sau đó mọi bản flash khác, rồi tới các model còn lại
+                const ordered = [
+                  ...preferred.filter(p => usable.includes(p)),
+                  ...usable.filter(m => /flash/i.test(m) && !preferred.includes(m)),
+                  ...usable.filter(m => !/flash/i.test(m) && !preferred.includes(m))
+                ];
+                if (ordered.length){
+                  cachedModels = ordered.slice(0, 5);
+                  return cachedModels;
+                }
+              } catch(e){
+                // Nếu không liệt kê được (key sai sẽ báo ở bước gọi chính) thì dùng danh sách mặc định
+              }
+              return preferred;
+            }
+            
+            // --- Giải đề ---
+            $('solveBtn').onclick = async () => {
+              const key = $('apiKey').value.trim();
+              if (!key) return showError('Vui lòng nhập API key Gemini ở Bước 1.');
+            
+              const pastedText = $('examText').value.trim();
+              if (files.length === 0 && !pastedText)
+                return showError('Vui lòng tải file đề hoặc dán nội dung đề bài ở Bước 2.');
+            
+              const extra = $('extraNote').value.trim();
+            
+              const systemPrompt =
+            `Bạn là giáo viên tiếng Anh giỏi nhất Việt Nam, chấm và giải đề cực kỳ chính xác.
+            Người dùng gửi cho bạn một bài kiểm tra tiếng Anh (có thể là ảnh chụp, PDF hoặc văn bản). Nhiệm vụ của bạn:
+            
+            1. Đọc kỹ TOÀN BỘ đề, không bỏ sót câu nào.
+            2. PHẦN TRẮC NGHIỆM (multiple choice, true/false, matching, điền từ có lựa chọn...):
+               - Trình bày thành BẢNG gồm các cột: "Câu" | "Đáp án" | "Giải thích ngắn gọn (tiếng Việt)".
+               - Đáp án phải chắc chắn, chính xác tuyệt đối. Giải thích nêu rõ điểm ngữ pháp/từ vựng liên quan.
+            3. PHẦN TỰ LUẬN (viết lại câu, chia động từ, sắp xếp câu, viết đoạn văn, viết thư, đọc hiểu trả lời câu hỏi...):
+               - Viết ĐÁP ÁN HOÀN CHỈNH cho từng câu (câu hoàn chỉnh / đoạn văn hoàn chỉnh đúng yêu cầu số từ).
+               - Sau mỗi đáp án, thêm phần "💡 Giải thích:" ngắn gọn bằng tiếng Việt.
+            4. Nếu đề có đoạn đọc hiểu, tóm tắt ý chính 1-2 câu tiếng Việt trước khi trả lời.
+            5. Trình bày bằng Markdown, chia theo đúng các Part/Section của đề, tiêu đề rõ ràng.
+            6. Cuối bài thêm mục "📌 Lưu ý ôn tập" liệt kê 3-5 điểm ngữ pháp/từ vựng quan trọng xuất hiện trong đề.
+            Nếu ảnh mờ hoặc thiếu trang, hãy nói rõ câu nào không đọc được thay vì đoán bừa.`;
+            
+              const parts = [];
+              let userText = '';
+              if (pastedText) userText += 'NỘI DUNG ĐỀ BÀI:\n\n' + pastedText + '\n\n';
+              for (const f of files){
+                if (f.text) userText += `--- Nội dung file "${f.name}" ---\n${f.text}\n\n`;
+              }
+              if (extra) userText += 'YÊU CẦU THÊM CỦA NGƯỜI DÙNG: ' + extra + '\n';
+              if (!userText) userText = 'Đề bài nằm trong các file đính kèm. Hãy giải toàn bộ.';
+              parts.push({ text: userText });
+              for (const f of files){
+                if (f.base64) parts.push({ inline_data: { mime_type: f.mime, data: f.base64 } });
+              }
+            
+              const body = {
+                system_instruction: { parts: [{ text: systemPrompt }] },
+                contents: [{ role: 'user', parts }],
+                generationConfig: { temperature: 0.2, maxOutputTokens: 8192 }
+              };
+            
+              $('solveBtn').disabled = true;
+              $('resultCard').classList.add('hidden');
+              showLoading('Đang đọc đề và giải toàn bộ bài... (thường mất 15–60 giây, đề dài sẽ lâu hơn)');
+            
+              try {
+                // Hỏi Google xem key này dùng được những model nào, rồi tự chọn model tốt nhất
+                const models = await getAvailableModels(key);
+                let data = null, lastErr = null;
+                for (const model of models){
+                  showLoading(`Đang giải đề bằng ${model}... (thường mất 15–60 giây, đề dài sẽ lâu hơn)`);
+                  const resp = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+                    { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }
+                  );
+                  const json = await resp.json();
+                  if (resp.ok && json.candidates?.[0]?.content?.parts){
+                    data = json; break;
+                  }
+                  lastErr = json.error?.message || ('HTTP ' + resp.status);
+                  // key sai hoặc bị chặn thì không cần thử model khác
+                  if (resp.status === 400 && /API key/i.test(lastErr)) break;
+                  if (resp.status === 403) break;
+                }
+                if (!data) throw new Error(lastErr || 'Không nhận được phản hồi từ AI.');
+            
+                const answer = data.candidates[0].content.parts.map(p => p.text || '').join('\n');
+                $('result').innerHTML = marked.parse(answer);
+                $('resultCard').classList.remove('hidden');
+                hideStatus();
+                $('resultCard').scrollIntoView({ behavior:'smooth' });
+              } catch(err){
+                let msg = err.message;
+                if (/API key not valid|API_KEY_INVALID/i.test(msg)) msg = 'API key không hợp lệ. Kiểm tra lại key ở Bước 1.';
+                else if (/quota|RESOURCE_EXHAUSTED|429/i.test(msg)) msg = 'Đã hết hạn mức miễn phí tạm thời. Đợi ~1 phút rồi thử lại.';
+                else if (/Failed to fetch/i.test(msg)) msg = 'Không kết nối được mạng hoặc bị chặn. Kiểm tra Internet và thử lại.';
+                showError(msg);
+              } finally {
+                $('solveBtn').disabled = false;
+              }
+            };
+            
+            // --- Copy & Print ---
+            $('copyBtn').onclick = async () => {
+              await navigator.clipboard.writeText($('result').innerText);
+              $('copyBtn').textContent = '✅ Đã sao chép!';
+              setTimeout(() => $('copyBtn').textContent = '📋 Sao chép', 2000);
+            };
+            $('printBtn').onclick = () => {
+              const w = window.open('', '_blank');
+              w.document.write(`<html><head><title>Đáp án bài kiểm tra</title>
+                <style>body{font-family:Segoe UI,Arial,sans-serif;max-width:800px;margin:30px auto;line-height:1.7;color:#111}
+                table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 10px}th{background:#eee}
+                h1,h2,h3{color:#0369a1}</style></head><body>${$('result').innerHTML}</body></html>`);
+              w.document.close(); w.print();
+            };
+        </script>
+    </body>
+
+</html>
