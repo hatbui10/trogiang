@@ -59,6 +59,25 @@
             #status.error{display:block; background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.35); color:var(--red);}
             .spinner{display:inline-block; width:14px; height:14px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin .8s linear infinite; vertical-align:-2px; margin-right:8px;}
             @keyframes spin{to{transform:rotate(360deg);}}
+            /* Thanh trên cùng + nút thu gọn */
+            #topbar{position:sticky; top:0; z-index:100; display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+              padding:10px 16px; background:rgba(15,23,42,.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--border);}
+            .tbTitle{font-weight:600; font-size:.9rem; margin-right:auto; color:var(--muted);}
+            .chip{background:var(--card2); border:1px solid rgba(52,211,153,.4); color:var(--green); border-radius:999px;
+              padding:6px 14px; font-size:.82rem; cursor:pointer; transition:.2s; font-family:inherit;}
+            .chip:hover{border-color:var(--accent); color:var(--accent); transform:translateY(-1px);}
+            .cardHead{cursor:pointer; user-select:none;}
+            .cardHead .chev{margin-left:auto; color:var(--muted); font-size:.78rem; font-weight:400; border:1px solid var(--border);
+              border-radius:999px; padding:4px 12px; transition:.2s;}
+            .cardHead:hover .chev{color:var(--accent); border-color:var(--accent);}
+            /* Tiến trình */
+            .pstep{display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-bottom:1px dashed var(--border); font-size:.88rem; line-height:1.5;}
+            .pstep:last-child{border-bottom:none;}
+            .pstep.done{color:var(--muted);}
+            .pstep.active{color:var(--text);}
+            .pstep.fail{color:var(--amber);}
+            .pstep.error{color:var(--red);}
+            .picon{width:22px; flex-shrink:0; text-align:center;}
             /* Kết quả */
             #result{line-height:1.7; font-size:.95rem;}
             #result h1,#result h2,#result h3{margin:20px 0 10px; color:#7dd3fc;}
@@ -78,6 +97,11 @@
     </head>
 
     <body>
+        <div id="topbar" class="hidden">
+            <span class="tbTitle">📘 Giải đề Tiếng Anh</span>
+            <button class="chip hidden" id="keyChip" onclick="expandCard('keyCard')"></button>
+            <button class="chip hidden" id="examChip" onclick="expandCard('examCard')"></button>
+        </div>
         <div class="container">
             <header>
                 <h1>📘 Trợ lý giải đề Tiếng Anh</h1>
@@ -85,52 +109,72 @@
             </header>
 
             <!-- BƯỚC 1: API KEY -->
-            <div class="card">
-                <h2><span class="step">1</span> Nhập API key Google Gemini (miễn phí, chỉ cần 1 lần)</h2>
-                <div class="row">
-                    <div style="flex:1; min-width:240px;">
-                        <input type="password" id="apiKey" placeholder="Dán API key của bạn vào đây (AIza...)">
+            <div class="card" id="keyCard">
+                <h2 class="cardHead" onclick="toggleCard('keyCard')"><span class="step">1</span> API key Google Gemini <span class="chev">⤒ Thu gọn</span></h2>
+                <div class="cardBody">
+                    <div class="row">
+                        <div style="flex:1; min-width:240px;">
+                            <input type="password" id="apiKey" placeholder="Dán API key của bạn vào đây (AIza...)">
+                        </div>
+                        <button class="btn secondary" id="toggleKey" type="button">👁 Hiện</button>
                     </div>
-                    <button class="btn secondary" id="toggleKey" type="button">👁 Hiện</button>
+                    <p class="hint">
+                        Chưa có key? Vào <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>
+                        → đăng nhập Google → bấm <b>"Create API key"</b> → sao chép và dán vào ô trên. Hoàn toàn miễn phí.
+                        Key được lưu ngay trên trình duyệt của bạn (localStorage), không gửi đi đâu khác ngoài Google.
+                    </p>
                 </div>
-                <p class="hint">
-                    Chưa có key? Vào <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>
-                    → đăng nhập Google → bấm <b>"Create API key"</b> → sao chép và dán vào ô trên. Hoàn toàn miễn phí.
-                    Key được lưu ngay trên trình duyệt của bạn (localStorage), không gửi đi đâu khác ngoài Google.
-                </p>
             </div>
 
             <!-- BƯỚC 2: ĐỀ BÀI -->
-            <div class="card">
-                <h2><span class="step">2</span> Đưa đề bài vào</h2>
-                <div class="tabs">
-                    <div class="tab active" data-tab="file">📎 Tải file / ảnh</div>
-                    <div class="tab" data-tab="text">✍️ Dán văn bản</div>
-                </div>
-
-                <div id="tab-file">
-                    <div class="dropzone" id="dropzone">
-                        <span class="icon">📂</span>
-                        <b>Bấm để chọn file</b> hoặc kéo-thả vào đây<br>
-                        <span style="font-size:.8rem;">Hỗ trợ: ảnh chụp đề (JPG/PNG/WEBP), PDF, Word (.docx), .txt — có thể chọn nhiều ảnh</span>
-                        <input type="file" id="fileInput" multiple accept="image/*,.pdf,.docx,.txt" style="display:none">
+            <div class="card" id="examCard">
+                <h2 class="cardHead" onclick="toggleCard('examCard')"><span class="step">2</span> Đưa đề bài vào <span class="chev">⤒ Thu gọn</span></h2>
+                <div class="cardBody">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="file">📎 Tải file / ảnh</div>
+                        <div class="tab" data-tab="text">✍️ Dán văn bản</div>
                     </div>
-                    <div id="fileList"></div>
-                </div>
 
-                <div id="tab-text" class="hidden">
-                    <textarea id="examText" placeholder="Dán toàn bộ đề kiểm tra tiếng Anh vào đây...
+                    <div id="tab-file">
+                        <div class="dropzone" id="dropzone">
+                            <span class="icon">📂</span>
+                            <b>Bấm để chọn file</b> hoặc kéo-thả vào đây<br>
+                            <span style="font-size:.8rem;">Hỗ trợ: ảnh chụp đề (JPG/PNG/WEBP), PDF, Word (.docx), .txt — có thể chọn nhiều ảnh</span>
+                            <input type="file" id="fileInput" multiple accept="image/*,.pdf,.docx,.txt" style="display:none">
+                        </div>
+                        <div id="fileList"></div>
+                    </div>
+
+                    <div id="tab-text" class="hidden">
+                        <textarea id="examText" placeholder="Dán toàn bộ đề kiểm tra tiếng Anh vào đây...
 
 Ví dụ:
 Question 1: She ______ to school every day.
 A. go   B. goes   C. going   D. went
 
 Part II. Writing: Write a paragraph (80-100 words) about your favorite hobby."></textarea>
-                </div>
+                    </div>
 
-                <div style="margin-top:14px;">
-                    <label>Yêu cầu thêm (không bắt buộc)</label>
-                    <input type="text" id="extraNote" placeholder="VD: Bài tự luận viết khoảng 120 từ, trình độ lớp 9 / Giải thích thật chi tiết...">
+                    <div style="margin-top:14px;">
+                        <label>Yêu cầu thêm (không bắt buộc)</label>
+                        <input type="text" id="extraNote" placeholder="VD: Bài tự luận viết khoảng 120 từ, trình độ lớp 9 / Giải thích thật chi tiết...">
+                    </div>
+
+                    <div style="margin-top:14px;">
+                        <label>Chọn sức mạnh AI</label>
+                        <select id="modelMode">
+                            <option value="pro" selected>🧠 Mạnh nhất — Gemini Pro (miễn phí, chính xác nhất, đọc được ảnh & PDF)</option>
+                            <option value="flash">⚡ Nhanh — Gemini Flash (miễn phí, nhanh, đủ tốt cho đề thường)</option>
+                            <option value="gpt">🤖 GPT-OSS 120B — model mở của OpenAI chạy miễn phí qua Groq (CHỈ nhận văn bản dán, không đọc ảnh)</option>
+                        </select>
+                        <p class="hint">Nếu chế độ Mạnh nhất báo hết lượt trong ngày, trang sẽ tự chuyển sang bản Nhanh.
+                            Claude và ChatGPT bản chính thức (GPT-4/5) không có API miễn phí nên không thể thêm vào đây.</p>
+                        <div id="groqKeyBox" class="hidden" style="margin-top:10px;">
+                            <label>API key Groq (miễn phí)</label>
+                            <input type="password" id="groqKey" placeholder="Dán key Groq vào đây (gsk_...)">
+                            <p class="hint">Lấy key miễn phí tại <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> → đăng ký → "Create API Key". Chế độ này chỉ giải được đề dán dạng văn bản.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -139,7 +183,10 @@ Part II. Writing: Write a paragraph (80-100 words) about your favorite hobby."><
                 <button class="btn" id="solveBtn">🚀 Giải đề ngay</button>
             </div>
 
-            <div id="status"></div>
+            <div class="card hidden" id="progressCard" style="margin-top:18px;">
+                <h2>⏳ Tiến trình giải đề</h2>
+                <div id="progressList"></div>
+            </div>
 
             <!-- KẾT QUẢ -->
             <div class="card hidden" id="resultCard">
@@ -228,17 +275,90 @@ Part II. Writing: Write a paragraph (80-100 words) about your favorite hobby."><
             }
             window.removeFile = i => { files.splice(i,1); renderFileList(); };
             
-            // --- Status ---
-            function showLoading(msg){ const s=$('status'); s.className='loading'; s.innerHTML='<span class="spinner"></span>'+msg; }
-            function showError(msg){ const s=$('status'); s.className='error'; s.textContent='❌ '+msg; }
-            function hideStatus(){ $('status').className=''; }
+            // --- Thu gọn thẻ thành nút nhỏ trên thanh đầu trang ---
+            function updateTopbar(){
+              const anyChip = !$('keyChip').classList.contains('hidden') || !$('examChip').classList.contains('hidden');
+              $('topbar').classList.toggle('hidden', !anyChip);
+            }
+            function collapseToChip(cardId, chipId, label){
+              $(cardId).classList.add('hidden');
+              const chip = $(chipId);
+              chip.textContent = label;
+              chip.classList.remove('hidden');
+              updateTopbar();
+            }
+            window.expandCard = cardId => {
+              $(cardId).classList.remove('hidden');
+              $(cardId === 'keyCard' ? 'keyChip' : 'examChip').classList.add('hidden');
+              updateTopbar();
+              $(cardId).scrollIntoView({ behavior:'smooth', block:'center' });
+            };
+            function collapseKeyCard(){
+              if (!$('apiKey').value.trim()) return;
+              collapseToChip('keyCard', 'keyChip', '🔑 API key ✓');
+            }
+            function collapseExamCard(){
+              const sum = [];
+              if (files.length) sum.push(files.length + ' file');
+              if ($('examText').value.trim()) sum.push('văn bản');
+              collapseToChip('examCard', 'examChip', '📝 Đề bài' + (sum.length ? ' (' + sum.join(' + ') + ')' : ''));
+            }
+            window.toggleCard = id => (id === 'keyCard'
+              ? collapseToChip('keyCard', 'keyChip', $('apiKey').value.trim() ? '🔑 API key ✓' : '🔑 Nhập API key')
+              : collapseExamCard());
+            if ($('apiKey').value.trim()) collapseKeyCard(); // đã có key lưu sẵn thì thu gọn luôn
+            $('apiKey').addEventListener('blur', collapseKeyCard);
+            $('apiKey').addEventListener('keydown', e => { if (e.key === 'Enter') collapseKeyCard(); });
+            
+            // --- Tiến trình giải đề ---
+            let progSteps = [];
+            function renderProgress(){
+              $('progressList').innerHTML = progSteps.map(s => {
+                const icon = s.state === 'active' ? '<span class="spinner"></span>'
+                           : s.state === 'done'   ? '✅'
+                           : s.state === 'fail'   ? '⚠️' : '❌';
+                return `<div class="pstep ${s.state}"><span class="picon">${icon}</span><span>${s.msg}</span></div>`;
+              }).join('');
+            }
+            function resetProgress(){
+              progSteps = [];
+              $('progressCard').classList.remove('hidden');
+              renderProgress();
+            }
+            function logStep(msg){
+              const last = progSteps[progSteps.length - 1];
+              if (last && last.state === 'active'){
+                if (last.msg === msg) return;
+                last.state = 'done';
+              }
+              progSteps.push({ msg, state:'active' });
+              renderProgress();
+            }
+            function showLoading(msg){ logStep(msg); }
+            function showError(msg){
+              $('progressCard').classList.remove('hidden');
+              const last = progSteps[progSteps.length - 1];
+              if (last && last.state === 'active') last.state = 'fail';
+              progSteps.push({ msg, state:'error' });
+              renderProgress();
+            }
+            function hideStatus(){
+              const last = progSteps[progSteps.length - 1];
+              if (last && last.state === 'active') last.state = 'done';
+              progSteps.push({ msg:'Hoàn tất! Kết quả hiển thị bên dưới. 👇', state:'done' });
+              renderProgress();
+            }
             
             // --- Tự dò model khả dụng với key của người dùng ---
-            let cachedModels = null;
+            let cachedModels = null, cachedMode = null;
             async function getAvailableModels(key){
-              if (cachedModels) return cachedModels;
-              const preferred = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
+              const mode = $('modelMode') ? $('modelMode').value : 'pro';
+              if (cachedModels && cachedMode === mode) return cachedModels;
+              const fallback = mode === 'pro'
+                ? ['gemini-pro-latest', 'gemini-2.5-pro', 'gemini-flash-latest', 'gemini-2.5-flash']
+                : ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-pro-latest', 'gemini-2.5-pro'];
               try {
+                logStep('Đang kiểm tra các model AI mà tài khoản của bạn dùng được...');
                 const resp = await fetch(
                   `https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${encodeURIComponent(key)}`
                 );
@@ -249,26 +369,66 @@ Part II. Writing: Write a paragraph (80-100 words) about your favorite hobby."><
                   .map(m => m.name.replace(/^models\//, ''))
                   // Loại các model không trả lời bằng văn bản (đọc giọng nói, tạo ảnh/video, embedding...)
                   .filter(m => !/tts|audio|image|imagen|veo|live|embed|aqa|robotics|computer-use/i.test(m));
-                // Ưu tiên danh sách preferred, sau đó mọi bản flash khác, rồi tới các model còn lại
-                const ordered = [
-                  ...preferred.filter(p => usable.includes(p)),
-                  ...usable.filter(m => /flash/i.test(m) && !preferred.includes(m)),
-                  ...usable.filter(m => !/flash/i.test(m) && !preferred.includes(m))
-                ];
+                // Xếp hạng động: ưu tiên phiên bản MỚI nhất (Google hay khóa các bản cũ),
+                // trong cùng phiên bản thì theo chế độ đã chọn (Pro trước hay Flash trước)
+                const score = m => {
+                  const ver = parseFloat((m.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
+                  let s = ver * 100;
+                  if (/latest/i.test(m)) s += 50;
+                  const isPro = /pro/i.test(m), isFlash = /flash/i.test(m);
+                  if (mode === 'pro'){ if (isPro) s += 30; else if (isFlash) s += 20; }
+                  else { if (isFlash) s += 30; else if (isPro) s += 20; }
+                  if (/lite/i.test(m)) s -= 15;       // bản rút gọn, yếu hơn
+                  if (/preview|exp/i.test(m)) s -= 5; // bản thử nghiệm kém ổn định
+                  return s;
+                };
+                const ordered = usable.sort((a,b) => score(b) - score(a));
                 if (ordered.length){
-                  cachedModels = ordered.slice(0, 5);
+                  cachedModels = ordered.slice(0, 8);
+                  cachedMode = mode;
                   return cachedModels;
                 }
               } catch(e){
                 // Nếu không liệt kê được (key sai sẽ báo ở bước gọi chính) thì dùng danh sách mặc định
               }
-              return preferred;
+              return fallback;
+            }
+            
+            // Hiện/ẩn ô key Groq theo chế độ
+            $('modelMode').onchange = () => {
+              $('groqKeyBox').classList.toggle('hidden', $('modelMode').value !== 'gpt');
+            };
+            $('groqKey') && ($('groqKey').value = localStorage.getItem('groq_key') || '');
+            $('groqKey').addEventListener('input', e => localStorage.setItem('groq_key', e.target.value.trim()));
+            
+            // Gọi GPT-OSS 120B qua Groq (API chuẩn OpenAI, chỉ nhận văn bản)
+            async function solveWithGroq(systemPrompt, userText){
+              const gkey = $('groqKey').value.trim();
+              if (!gkey) throw new Error('Vui lòng dán API key Groq (lấy miễn phí tại console.groq.com/keys).');
+              showLoading('Đang giải đề bằng GPT-OSS 120B (OpenAI, chạy qua Groq)...');
+              const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + gkey },
+                body: JSON.stringify({
+                  model: 'openai/gpt-oss-120b',
+                  messages: [
+                    { role:'system', content: systemPrompt },
+                    { role:'user', content: userText }
+                  ],
+                  temperature: 0.2,
+                  max_tokens: 8192
+                })
+              });
+              const json = await resp.json();
+              if (!resp.ok) throw new Error(json.error?.message || ('HTTP ' + resp.status));
+              return json.choices?.[0]?.message?.content || '';
             }
             
             // --- Giải đề ---
             $('solveBtn').onclick = async () => {
+              const mode = $('modelMode').value;
               const key = $('apiKey').value.trim();
-              if (!key) return showError('Vui lòng nhập API key Gemini ở Bước 1.');
+              if (mode !== 'gpt' && !key) return showError('Vui lòng nhập API key Gemini ở Bước 1.');
             
               const pastedText = $('examText').value.trim();
               if (files.length === 0 && !pastedText)
@@ -311,31 +471,83 @@ Part II. Writing: Write a paragraph (80-100 words) about your favorite hobby."><
                 generationConfig: { temperature: 0.2, maxOutputTokens: 8192 }
               };
             
+              // Thu gọn 2 thẻ phía trên thành nút nhỏ trên thanh đầu trang
+              collapseKeyCard();
+              collapseExamCard();
+              const sum = [];
+              if (files.length) sum.push(files.length + ' file');
+              if (pastedText) sum.push('văn bản đã dán');
+            
               $('solveBtn').disabled = true;
               $('resultCard').classList.add('hidden');
+              resetProgress();
+              logStep(`Đã nhận đề bài (${sum.join(' + ')}${extra ? ', kèm yêu cầu thêm' : ''}). Đang chuẩn bị gửi cho AI...`);
               showLoading('Đang đọc đề và giải toàn bộ bài... (thường mất 15–60 giây, đề dài sẽ lâu hơn)');
+            
+              // Chế độ GPT-OSS qua Groq: chỉ nhận văn bản
+              if (mode === 'gpt'){
+                try {
+                  if (files.some(f => f.base64))
+                    throw new Error('GPT-OSS không đọc được ảnh/PDF. Hãy dán đề dạng văn bản (hoặc tải file .docx/.txt), hoặc chuyển về chế độ Gemini để giải từ ảnh.');
+                  const answer = await solveWithGroq(systemPrompt, userText);
+                  if (!answer) throw new Error('Không nhận được phản hồi từ AI.');
+                  $('result').innerHTML = marked.parse(answer);
+                  $('resultCard').classList.remove('hidden');
+                  hideStatus();
+                  $('resultCard').scrollIntoView({ behavior:'smooth' });
+                } catch(err){
+                  let msg = err.message;
+                  if (/invalid.*key|401/i.test(msg)) msg = 'API key Groq không hợp lệ. Kiểm tra lại key (gsk_...).';
+                  else if (/rate|429/i.test(msg)) msg = 'Groq đang giới hạn lượt miễn phí. Đợi ~1 phút rồi thử lại.';
+                  else if (/Failed to fetch/i.test(msg)) msg = 'Không kết nối được tới Groq. Kiểm tra Internet và thử lại.';
+                  showError(msg);
+                } finally {
+                  $('solveBtn').disabled = false;
+                }
+                return;
+              }
             
               try {
                 // Hỏi Google xem key này dùng được những model nào, rồi tự chọn model tốt nhất
                 const models = await getAvailableModels(key);
+                const sleep = ms => new Promise(r => setTimeout(r, ms));
                 let data = null, lastErr = null;
+                outer:
                 for (const model of models){
-                  showLoading(`Đang giải đề bằng ${model}... (thường mất 15–60 giây, đề dài sẽ lâu hơn)`);
-                  const resp = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
-                    { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }
-                  );
-                  const json = await resp.json();
-                  if (resp.ok && json.candidates?.[0]?.content?.parts){
-                    data = json; break;
+                  // Mỗi model thử tối đa 3 lần nếu gặp quá tải / hết quota tạm thời
+                  for (let attempt = 1; attempt <= 3; attempt++){
+                    showLoading(`Đang giải đề bằng ${model}${attempt > 1 ? ` (thử lại lần ${attempt}/3 do máy chủ Google quá tải...)` : '... (thường mất 15–60 giây, đề dài sẽ lâu hơn)'}`);
+                    let resp, json;
+                    try {
+                      resp = await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+                        { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }
+                      );
+                      json = await resp.json();
+                    } catch(netErr){
+                      lastErr = netErr.message; break;
+                    }
+                    if (resp.ok && json.candidates?.[0]?.content?.parts){
+                      data = json; break outer;
+                    }
+                    lastErr = json.error?.message || ('HTTP ' + resp.status);
+                    // key sai hoặc bị chặn thì dừng hẳn
+                    if (resp.status === 400 && /API key/i.test(lastErr)) break outer;
+                    if (resp.status === 403) break outer;
+                    // Hết lượt miễn phí TRONG NGÀY của model này (vd 2.5 Pro chỉ ~50 bài/ngày):
+                    // không cần đợi, chuyển ngay sang model tiếp theo (Flash)
+                    if (resp.status === 429 && /PerDay|per day|daily/i.test(lastErr)) break;
+                    // Quá tải (503) hoặc hết quota tạm thời theo phút (429): đợi rồi thử lại
+                    if (resp.status === 503 || resp.status === 429 || /high demand|overloaded|UNAVAILABLE/i.test(lastErr)){
+                      if (attempt < 3) await sleep(8000);
+                      continue;
+                    }
+                    break; // lỗi khác: chuyển sang model tiếp theo
                   }
-                  lastErr = json.error?.message || ('HTTP ' + resp.status);
-                  // key sai hoặc bị chặn thì không cần thử model khác
-                  if (resp.status === 400 && /API key/i.test(lastErr)) break;
-                  if (resp.status === 403) break;
                 }
                 if (!data) throw new Error(lastErr || 'Không nhận được phản hồi từ AI.');
             
+                logStep('Đã nhận kết quả, đang trình bày đáp án...');
                 const answer = data.candidates[0].content.parts.map(p => p.text || '').join('\n');
                 $('result').innerHTML = marked.parse(answer);
                 $('resultCard').classList.remove('hidden');
@@ -344,6 +556,7 @@ Part II. Writing: Write a paragraph (80-100 words) about your favorite hobby."><
               } catch(err){
                 let msg = err.message;
                 if (/API key not valid|API_KEY_INVALID/i.test(msg)) msg = 'API key không hợp lệ. Kiểm tra lại key ở Bước 1.';
+                else if (/high demand|overloaded|UNAVAILABLE|503/i.test(msg)) msg = 'Máy chủ Google đang quá tải (lỗi từ phía Google, không phải do bạn). Đã tự thử lại nhiều lần nhưng chưa được — đợi 1–2 phút rồi bấm "Giải đề ngay" lại nhé.';
                 else if (/quota|RESOURCE_EXHAUSTED|429/i.test(msg)) msg = 'Đã hết hạn mức miễn phí tạm thời. Đợi ~1 phút rồi thử lại.';
                 else if (/Failed to fetch/i.test(msg)) msg = 'Không kết nối được mạng hoặc bị chặn. Kiểm tra Internet và thử lại.';
                 showError(msg);
